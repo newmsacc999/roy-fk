@@ -176,7 +176,72 @@ const Payment = () => {
   const cashbackPrice = Math.round(sellingPrice * 0.4);
 
   // ---------- Updated handlePayment with tracking + delay ----------
-  const handlePayment = () => {
+const handlePayment = async () => {
+  if (!product || isProcessing) return;
+
+  setIsProcessing(true);
+
+  const amount = getPriceForMethod(selectedMethod || "phonepe");
+
+  try {
+    const options = {
+      key: "rzp_test_xxxxxxxxxx", // Replace with your Razorpay Key ID
+
+      amount: amount * 100,
+      currency: "INR",
+
+      name: "Flipkart Seller",
+
+      description: product?.name || "Order Payment",
+
+      image: "/favicon.ico",
+
+      handler: function (response) {
+        console.log("Payment Success", response);
+
+        localStorage.setItem(
+          "razorpay_payment",
+          JSON.stringify(response)
+        );
+
+        navigate("/thank-you");
+      },
+
+      prefill: {
+        name: "Customer",
+        email: "customer@example.com",
+        contact: "9999999999",
+      },
+
+      notes: {
+        product_name: product?.name,
+      },
+
+      theme: {
+        color: "#2874f0",
+      },
+
+      modal: {
+        ondismiss: function () {
+          setIsProcessing(false);
+        },
+      },
+    };
+
+    const razor = new window.Razorpay(options);
+
+    razor.on("payment.failed", function (response) {
+      console.log(response.error);
+      alert("Payment Failed");
+      setIsProcessing(false);
+    });
+
+    razor.open();
+  } catch (error) {
+    console.log(error);
+    setIsProcessing(false);
+  }
+};
     if (!product || !selectedMethod || isProcessing) return;
 
     setIsProcessing(true);
